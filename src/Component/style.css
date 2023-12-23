@@ -1,0 +1,21 @@
+.header{
+    padding-top: 0.6rem;
+    border-bottom: 1px solid black;
+    padding-bottom: 0.6rem
+}
+
+/* .header .col-md-12{
+   font-size: 1.5rem;
+   font-weight: 600;
+} */
+
+.layout-style{
+    padding-right: 4rem;
+    padding-left: 4rem;
+    padding-bottom: 1.5rem;
+    border: none;
+}
+/* .text-style{
+    font-size: 1.3rem;
+   font-weight: 500;
+} */

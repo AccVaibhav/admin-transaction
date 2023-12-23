@@ -36,3 +36,45 @@
     transform: rotate(360deg);
   }
 }
+
+.contentCenter {
+  display: flex;
+  justify-content: center;
+}
+
+.itemsLeft {
+  display: flex;
+  flex-direction: column;
+}
+
+.lebelLeft {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.text-sm {
+  font-size: 0.8rem;
+}
+
+#filterContainer{
+  margin-bottom: 20px;
+  margin-right: 20px;
+}
+
+.error-message { 
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: .875em;
+  color: var(--bs-form-invalid-color);
+}
+
+.flex-end {
+  display: flex;
+  justify-content: end;
+  margin-right: 20px;
+}
+
+.margin-bt-20 {
+  margin-bottom: 20px;
+}
