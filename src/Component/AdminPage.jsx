@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useCallback } from "react";
 import Table from "./VTable";
 import Header from "./BaseComponents/Header";
 import FormModal from "./FormModal";
@@ -9,18 +9,26 @@ import { Container, Row, Col } from "react-bootstrap";
 const AdminPage = () => {
 
 const [modal, setModal] = useState(false);
-const [rowData, setRowData] = useState(false);
+const [rowDataForForm, setRowDataForForm] = useState(false);
 const [originalData, setOriginalData] = useState(defaultTableData);
 const [filteredData, setFilteredData] = useState(originalData);
 
+  // toggle modal ON or OFF
+  const toggleModal = useCallback(() => {
+    if(modal){
+      setRowDataForForm(false);
+    }
+    setModal(!modal);
+  }, [modal, setRowDataForForm, setModal]);
+
   // Handle row click: Open modal to edit the row
-  const onRowClick = (item) => {
-    setRowData(item);
+  const onRowClick = useCallback((item) => {
+    setRowDataForForm(item);
     toggleModal();
-  }
+  }, [setRowDataForForm, toggleModal]);
 
   // update data when added or updated from transaction form
-  const onRowAddOrUpdate = (data, isUpdate) => {
+  const onRowAddOrUpdate = useCallback((data, isUpdate) => {
     if(isUpdate){
       const updatedTransactions = originalData.map((item) => {
         return item.id === data.id ? data : item;
@@ -29,10 +37,10 @@ const [filteredData, setFilteredData] = useState(originalData);
     }else{
       setOriginalData((previousData) => [...previousData, data]);
     }
-  };
+  }, [originalData, setOriginalData]);
 
   // Handle delete transaction item
-  const handleDeleteTransaction = (e, id) => {
+  const handleDeleteTransaction = useCallback((e, id) => {
     if(id){
       const updatedTransactions = originalData.filter((item) => {
         return item.id !== id;
@@ -40,18 +48,21 @@ const [filteredData, setFilteredData] = useState(originalData);
       setOriginalData(() => updatedTransactions);
     }
     e.stopPropagation()
-  };
+  }, [originalData, setOriginalData]);
 
   //Util to get filtered value for key
-  const getFilterValue = (arr, filterKeys, key) => {
-    const filterArray = arr.filter((item) => {
-      return filterKeys[key] ? item[key] === filterKeys[key] : true;
-    });
-    return filterArray;
-  }
+  const getFilterValue = useCallback((arr, filterKeys, key) => {
+    if(filterKeys[key]){
+      const filterArray = arr.filter((item) => {
+        return filterKeys[key] ? item[key] === filterKeys[key] : true;
+      });
+      return filterArray;
+    }
+    return arr;
+  }, []);
 
   // Filter table data
-  const handleFilterChange = (filterKeys) => {
+  const handleFilterChange = useCallback((filterKeys) => {
     const filterByBranch = getFilterValue(originalData, filterKeys, 'branch');
     const filterByType = getFilterValue(filterByBranch, filterKeys, 'type');
     const filterByStatus = getFilterValue(filterByType, filterKeys, 'status');
@@ -60,28 +71,20 @@ const [filteredData, setFilteredData] = useState(originalData);
     if(filterKeys.fromdate && filterKeys.todate){
       filterByDate = filterById.filter((data) => {
         const currentDate = new Date(data.date).getTime();
-        const sd = new Date(filterKeys.fromdate).getTime();
-        const ed = new Date(filterKeys.todate).getTime();
-        return currentDate >= sd && currentDate <= ed;
+        const startDate = new Date(filterKeys.fromdate).getTime();
+        const endDate = new Date(filterKeys.todate).getTime();
+        return currentDate >= startDate && currentDate <= endDate;
       });
     }
     setFilteredData(() => filterByDate);
-  }
-
-  // toggle modal ON or OFF
-  const toggleModal = () => {
-    if(modal){
-      setRowData(false);
-    }
-    setModal(!modal);
-  };
+  }, [originalData, getFilterValue, setFilteredData]);
 
   // Format display of date in table
-  const formatDateDisplay = (value) => {
+  const formatDateDisplay = useCallback((value) => {
     const dateElements = value.split('-');
     const formatedDate = `${dateElements[2]}/${dateElements[1]}/${dateElements[0]}`;
     return formatedDate;
-  };
+  }, []);
 
   // Columns of table: Renders titles and each cell in format
   const columns = [
@@ -185,7 +188,13 @@ const [filteredData, setFilteredData] = useState(originalData);
           <FilterTable handleFilterChange={handleFilterChange} />
         </div>
         <div>
-        <FormModal show={modal} handleClose={toggleModal} rowData={rowData} onRowAddOrUpdate={onRowAddOrUpdate}/>
+          <FormModal
+            show={modal}
+            handleClose={toggleModal}
+            rowData={rowDataForForm}
+            onRowAddOrUpdate={onRowAddOrUpdate}
+            allExistingIds = {originalData && originalData.length > 0 ? originalData.map((item) => item.id) : []}
+          />
         </div>
        
         <div>

@@ -1,56 +1,57 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button, Form, Modal, InputGroup } from 'react-bootstrap';
 import SelectField from "./BaseComponents/SelectField";
-import { BranchOptions } from "../Constants";
+import { BranchOptions, defaultFormData } from "../Constants";
 
-// Used to init and reset form data
-const defaultFormData = {
-  id: "",
-  date: "",
-  branch: "",
-  type: "",
-  amount: "",
-  bank: "",
-  employeeName: "",
-  employeeId: "",
-  status: ""
-}
-
-const FormModal = ({ show, handleClose, rowData, onRowAddOrUpdate }) => {
+const FormModal = ({ show, handleClose, rowData, onRowAddOrUpdate, allExistingIds }) => {
 
     const [validated, setValidated] = useState(false);
+    const [hasDuplicateId, setHasDuplicateId] = useState(false);
     const [formData, setFormData] = useState(defaultFormData);
 
     // Handle input value on change
-    const handleChange = (event) => {
+    const handleChange = useCallback((event) => {
       let { name, value } = event.target;
-      console.log("Name: ", name, "value: ", value);
       setFormData((prevState) => ({
         ...prevState,
         [name]: value,
       }));
-    };
+      if(hasDuplicateId){
+        setHasDuplicateId(false);
+      }
+    }, [setFormData, hasDuplicateId]);
 
+    // Handle modal close and reset form data
+    const handleModalClose = useCallback(() => {
+      setFormData(defaultFormData);
+      setValidated(false);
+      setHasDuplicateId(false);
+      handleClose();
+    }, [setFormData, setValidated, handleClose]);
+  
     // Handle form submit
-    const handleSubmit = (event) => {
+    const handleSubmit = useCallback((event) => {
       const form = event.currentTarget;
+      // Check form validity
       if (form.checkValidity() === false) {
         event.stopPropagation();
         event.preventDefault();
         setValidated(true);
         return;
       }
+      // Check for duplicate Id
+      if(allExistingIds && allExistingIds.length > 0 && !rowData){
+        const isIdAlreadyExists = allExistingIds.some((id) => id === formData.id);
+        if(isIdAlreadyExists){
+          setHasDuplicateId(true);
+          event.preventDefault();
+          return;
+        }
+      }
       onRowAddOrUpdate(formData, rowData ? true : false);
       handleModalClose();
       event.preventDefault();
-    };
-
-    // Handle modal close and reset form data
-    const handleModalClose = () => {
-      setFormData(defaultFormData);
-      setValidated(false);
-      handleClose();
-    }
+    }, [setValidated, onRowAddOrUpdate, handleModalClose, formData, rowData, allExistingIds, setHasDuplicateId]);
   
     // Set Transaction data if need to update
     useEffect(() => {
@@ -227,6 +228,7 @@ const FormModal = ({ show, handleClose, rowData, onRowAddOrUpdate }) => {
                     />
                   </InputGroup>
                 </Form.Group>
+                {hasDuplicateId && <div class="error-message contentCenter">Transaction id already exists</div>}
                 <Modal.Footer>
                   <Button variant="secondary" onClick={handleModalClose}>
                     Close

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Pagination } from 'react-bootstrap';
 
 
@@ -6,7 +6,8 @@ import { Pagination } from 'react-bootstrap';
 const Table = ({
   cols,
   tableData,
-  onRowClick
+  onRowClick,
+  itemsPerPage = 10
 }) => {
 
   // Used for date sorting
@@ -19,55 +20,66 @@ const Table = ({
     setPages(1);
   },[tableData]);
 
-  const requestSort = (key) => {
+  const requestSort = useCallback((key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
     setSortConfig({ key, direction });
-  };
+  }, [sortConfig.key, sortConfig.direction, setSortConfig]);
 
-  const onPaginationClick = (page) => {
+  const onPaginationClick = useCallback((page) => {
     setPages(page)
-  }
+  }, [setPages]);
 
-  // Set the pagination UI at the botton
-  let items = [];
-  if(tableData.length > 0){
-    for (let number = 1; number <= Math.ceil((tableData.length/10)); number++) {
-      items.push(
-        <Pagination.Item name={number} key={number} active={number === pages} onClick={() => onPaginationClick(number)}>
-          {number}
-        </Pagination.Item>,
-      );
+  // Set the pagination UI at the botton and its count
+  const items = useMemo(() => {
+    let paginationItems = [];
+    if(tableData.length > 0){
+      // 1 - 9/10 - 0.9
+      // 2 - 11/10 - 1.1
+      for (let number = 1; number <= Math.ceil((tableData.length/itemsPerPage)); number++) {
+        paginationItems.push(
+          <Pagination.Item name={number} key={number} active={number === pages} onClick={() => onPaginationClick(number)}>
+            {number}
+          </Pagination.Item>,
+        );
+      }
     }
-  }
+    return paginationItems;
+  }, [tableData, pages, itemsPerPage]);
+  
 
   // Filter data based on pagination
-  let displayData = [];
-  if(tableData.length > 0){
-    for(let i = ((pages * 10) - 10); (i < (pages * 10) && tableData[i]) ; i++){
-      displayData.push(tableData[i]);
-    }
-  }
-
-  // Sorting data for date field
-  if (sortConfig.key !== null) {
-    // const sortedItems = [...displayData];
-    displayData.sort((a, b) => {
-      const valueA = new Date(a[sortConfig.key]).getTime();
-      const valueB = new Date(b[sortConfig.key]).getTime();
-      if (typeof valueA === "number" && typeof valueB === "number") {
-        // Sort numbers
-        return sortConfig.direction === "asc"
-          ? valueA - valueB
-          : valueB - valueA;
+  let displayData = useMemo(() => {
+    let sortedPaginationData = [];
+  
+    if(tableData.length > 0){
+      // 1 - 0 - 9
+      // 2 - 10 - 19
+      for(let i = ((pages * itemsPerPage) - itemsPerPage); (i < (pages * itemsPerPage) && tableData[i]) ; i++){
+        sortedPaginationData.push(tableData[i]);
       }
-      return 0;
-    });
-
-    // return sortedItems;
-  }
+    }
+  
+    // Sorting data for date field
+    if (sortConfig.key !== null && sortedPaginationData.length > 0) {
+      sortedPaginationData.sort((a, b) => {
+        const valueA = new Date(a[sortConfig.key]).getTime();
+        const valueB = new Date(b[sortConfig.key]).getTime();
+        if (typeof valueA === "number" && typeof valueB === "number") {
+          // Sort numbers
+          return sortConfig.direction === "asc"
+            ? valueA - valueB
+            : valueB - valueA;
+        }
+        return 0;
+      });
+    }
+  
+    return sortedPaginationData;
+  }, [tableData, pages, sortConfig.key, sortConfig.direction, itemsPerPage]);
+  
 
   return (
     <div>

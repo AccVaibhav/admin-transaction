@@ -1,18 +1,11 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback } from 'react';
 import { Row, Col, Form } from 'react-bootstrap';
 import SelectField from './SelectField';
-import { BranchOptions,TypeOptions, StatusOptions } from '../../Constants';
+import { BranchOptions, TypeOptions, StatusOptions, defaultFilterData } from '../../Constants';
 
 function FilterTable({ handleFilterChange }) {
   const [validateDate, setValidateDate] = useState(false);
-  const [filterData, setFilterData] = useState({
-    fromdate: '',
-    todate: '',
-    branch: '',
-    type: '',
-    status: '',
-    id: ''
-  });
+  const [filterData, setFilterData] = useState(defaultFilterData);
 
   // Send filter values to Layout component
   useEffect(() => {
@@ -23,7 +16,7 @@ function FilterTable({ handleFilterChange }) {
   }, [filterData]);
 
   // Handle filter on change and date validation
-  const handleChange = (event) => {
+  const handleChange = useCallback((event) => {
     const { name, value } = event.target;
     
     setFilterData((prevState) => ({
@@ -33,9 +26,9 @@ function FilterTable({ handleFilterChange }) {
 
     if(name === 'fromdate'){
         if(filterData.todate){
-            const ed = new Date(filterData.todate).getTime();
-            const sd = new Date(value).getTime();
-            if(sd > ed){
+            const endDate = new Date(filterData.todate).getTime();
+            const startDate = new Date(value).getTime();
+            if(startDate > endDate){
                 setValidateDate(true);
                 return;
             }
@@ -44,16 +37,16 @@ function FilterTable({ handleFilterChange }) {
     
     if(name === 'todate'){
         if(filterData.fromdate){
-            const sd = new Date(filterData.fromdate).getTime();
-            const ed = new Date(value).getTime();
-            if(sd > ed){
+            const startDate = new Date(filterData.fromdate).getTime();
+            const endDate = new Date(value).getTime();
+            if(startDate > endDate){
                 setValidateDate(true);
                 return;
             }
         }
     }
     setValidateDate(false);
-  }
+  }, [setFilterData, filterData, setValidateDate]);
 
   return (
     <div id="filterContainer">

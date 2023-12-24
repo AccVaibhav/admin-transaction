@@ -20,6 +20,28 @@ export const StatusOptions = [
     { code: 'Rejected', value: 'Rejected'},
 ];
 
+// Used to init and reset form data
+export const defaultFormData = {
+  id: "",
+  date: "",
+  branch: "",
+  type: "",
+  amount: "",
+  bank: "",
+  employeeName: "",
+  employeeId: "",
+  status: ""
+};
+
+export const defaultFilterData = {
+  fromdate: '',
+  todate: '',
+  branch: '',
+  type: '',
+  status: '',
+  id: ''
+};
+
   // Data to be rendered in a table
 export const defaultTableData = [
     {
